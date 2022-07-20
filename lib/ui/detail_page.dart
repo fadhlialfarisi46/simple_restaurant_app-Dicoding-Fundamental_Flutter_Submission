@@ -362,8 +362,7 @@ class _DetailPageState extends State<DetailPage> {
                                 );
                               });
                         }
-                        _nameController.text = '';
-                        _reviewController.text = '';
+                        _clearFormTextField();
                       }
                     },
                     child: const Text('Add review')),
@@ -414,6 +413,11 @@ class _DetailPageState extends State<DetailPage> {
             )),
       ],
     ));
+  }
+
+  void _clearFormTextField() {
+    _nameController.clear();
+    _reviewController.clear();
   }
 }
 
