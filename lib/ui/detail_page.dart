@@ -421,8 +421,6 @@ class _DetailPageState extends State<DetailPage> {
   }
 }
 
-
-
 class FavoriteButton extends StatefulWidget {
   const FavoriteButton({Key? key}) : super(key: key);
 
