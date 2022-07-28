@@ -15,23 +15,30 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  String lastInputText='';
+  String lastInputText = '';
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_)=> SearchRestaurantProvider(apiService: ApiService()),
+      create: (_) => SearchRestaurantProvider(apiService: ApiService()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
             'Search Restaurants',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.black),
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const BackButton(
+            color: Colors.black,
+          ),
         ),
         body: SafeArea(
           child: Column(
-            children: [_buildSearchField(), Expanded(child: _buildListRestaurant())],
+            children: [
+              _buildSearchField(),
+              Expanded(child: _buildListRestaurant())
+            ],
           ),
         ),
       ),
@@ -45,14 +52,13 @@ class _SearchPageState extends State<SearchPage> {
         builder: (context, state, _) {
           return TextField(
             decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Input text here',
-              prefixIcon: Icon(Icons.search_sharp, color: Colors.black)
-            ),
+                border: OutlineInputBorder(),
+                hintText: 'Input text here',
+                prefixIcon: Icon(Icons.search_sharp, color: Colors.black)),
             onChanged: (keyword) async {
-               if (keyword.trim().isNotEmpty && lastInputText != keyword) {
+              if (keyword.trim().isNotEmpty && lastInputText != keyword) {
                 lastInputText = keyword;
-                  await state.searchRestaurants(keyword);
+                await state.searchRestaurants(keyword);
               }
             },
           );
@@ -62,26 +68,29 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildListRestaurant() {
-    return Consumer<SearchRestaurantProvider>(
-        builder: (context, state, _) {
-          if (state.state == ResultState.Loading){
-            return const Center(child: CircularProgressIndicator());
-          } else if (state.state == ResultState.HasData) {
-            return ListView.builder(
-              shrinkWrap: true,
-              itemBuilder: (context, index) {
-                var restaurant = state.result.restaurants[index];
-                return ItemRestaurants(restaurant: restaurant);
-              },
-              itemCount: state.result.restaurants.length,
-            );
-          } else if (state.state == ResultState.NoData) {
-            return Center(child: Text(state.message),);
-          } else if (state.state == ResultState.Error) {
-            return Center(child: Text(state.message),);
-          } else {
-            return const Center(child: Text(''));
-          }
+    return Consumer<SearchRestaurantProvider>(builder: (context, state, _) {
+      if (state.state == ResultState.loading) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (state.state == ResultState.hasData) {
+        return ListView.builder(
+          shrinkWrap: true,
+          itemBuilder: (context, index) {
+            var restaurant = state.result.restaurants[index];
+            return ItemRestaurants(restaurant: restaurant);
+          },
+          itemCount: state.result.restaurants.length,
+        );
+      } else if (state.state == ResultState.noData) {
+        return Center(
+          child: Text(state.message),
+        );
+      } else if (state.state == ResultState.error) {
+        return Center(
+          child: Text(state.message),
+        );
+      } else {
+        return const Center(child: Text(''));
+      }
     });
   }
 }

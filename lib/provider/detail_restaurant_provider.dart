@@ -8,11 +8,11 @@ import 'package:simple_restaurant_app/data/response/review_restaurant_result.dar
 import '../data/api/api_service.dart';
 import '../extension/state_management.dart';
 
-class DetailRestaurantsProvider extends ChangeNotifier{
+class DetailRestaurantsProvider extends ChangeNotifier {
   final ApiService apiService;
   final String id;
 
-  DetailRestaurantsProvider({required this.apiService, required this.id}){
+  DetailRestaurantsProvider({required this.apiService, required this.id}) {
     _fetchDetailRestaurant(id);
   }
 
@@ -38,46 +38,47 @@ class DetailRestaurantsProvider extends ChangeNotifier{
   List<CustomerReview> get customerReview => _customerReview;
 
   Future<dynamic> _fetchDetailRestaurant(String id) async {
-    try{
-      _state = ResultState.Loading;
+    try {
+      _state = ResultState.loading;
       notifyListeners();
 
       final restaurant = await apiService.detailRestaurants(id);
-      if(restaurant.error){
-        _state = ResultState.NoData;
+      if (restaurant.error) {
+        _state = ResultState.noData;
         notifyListeners();
         return _message = 'Failed to load data';
-      }else{
-        _state = ResultState.HasData;
+      } else {
+        _state = ResultState.hasData;
         restaurant.restaurant.customerReviews?.forEach((element) {
           _customerReview.add(element);
         });
         notifyListeners();
         return _restaurantResult = restaurant;
       }
-    }on SocketException{
-      _state = ResultState.Error;
+    } on SocketException {
+      _state = ResultState.error;
       notifyListeners();
-      return _message = 'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
-    }catch (e) {
-      _state = ResultState.Error;
+      return _message =
+          'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
+    } catch (e) {
+      _state = ResultState.error;
       notifyListeners();
       return _message = 'Error --> $e';
     }
   }
 
-  Future<dynamic> postReview(String id, String name, String review) async{
-    try{
-      _postState = PostState.Loading;
+  Future<dynamic> postReview(String id, String name, String review) async {
+    try {
+      _postState = PostState.loading;
 
       final result = await apiService.postReview(id, name, review);
       notifyListeners();
-      if(result.error){
-        _postState = PostState.Error;
+      if (result.error) {
+        _postState = PostState.error;
         notifyListeners();
         return _postMessage = 'Error: ${result.message}';
-      }else{
-        _postState = PostState.Success;
+      } else {
+        _postState = PostState.success;
         _customerReview.length = 0;
         for (var element in result.customerReviews) {
           _customerReview.add(element);
@@ -85,12 +86,13 @@ class DetailRestaurantsProvider extends ChangeNotifier{
         notifyListeners();
         return _reviewRestaurantResult = result;
       }
-    } on SocketException{
-      _postState = PostState.Error;
+    } on SocketException {
+      _postState = PostState.error;
       notifyListeners();
-      return _postMessage = 'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
-    }catch (e) {
-      _postState = PostState.Error;
+      return _postMessage =
+          'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
+    } catch (e) {
+      _postState = PostState.error;
       notifyListeners();
       return _postMessage = 'Error --> $e';
     }

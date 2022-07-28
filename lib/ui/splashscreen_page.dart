@@ -13,7 +13,6 @@ class SplashScreenPage extends StatefulWidget {
 }
 
 class _SplashScreenPageState extends State<SplashScreenPage> {
-
   @override
   void initState() {
     super.initState();
@@ -34,14 +33,19 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: CircleAvatar(
-          radius: MediaQuery.of(context).size.shortestSide * .3,
-          backgroundColor: Colors.red,
-          child: const Text("Restaurant App", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 32),
-        ),),
-    )
-    );
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircleAvatar(
+            radius: MediaQuery.of(context).size.shortestSide * .3,
+            backgroundColor: Colors.red,
+            child: const Text(
+              "Restaurant App",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 32),
+            ),
+          ),
+        ));
   }
 }
