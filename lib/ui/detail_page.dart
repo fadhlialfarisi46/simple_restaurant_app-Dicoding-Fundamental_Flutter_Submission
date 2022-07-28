@@ -4,17 +4,19 @@ import 'package:simple_restaurant_app/data/api/api_service.dart';
 import 'package:simple_restaurant_app/data/model/customer_review.dart';
 import 'package:simple_restaurant_app/data/model/restaurant.dart';
 import 'package:simple_restaurant_app/extension/state_management.dart';
+import 'package:simple_restaurant_app/provider/database_provider.dart';
 import 'package:simple_restaurant_app/provider/detail_restaurant_provider.dart';
+
+import '../common/navigation_route.dart';
 
 class DetailPage extends StatefulWidget {
   static const routeName = '/detail_page';
-  final String id;
-  final String pictureId;
+
+  final Restaurant detailRestaurant;
 
   const DetailPage({
     Key? key,
-    required this.id,
-    required this.pictureId,
+    required this.detailRestaurant,
   }) : super(key: key);
 
   @override
@@ -29,7 +31,7 @@ class _DetailPageState extends State<DetailPage> {
 
   bool _formVisible = false;
 
-  void setFormVisible(bool value){
+  void setFormVisible(bool value) {
     setState(() {
       _formVisible = value;
     });
@@ -44,80 +46,123 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<DetailRestaurantsProvider>(
-        create: (_) =>
-            DetailRestaurantsProvider(apiService: ApiService(), id: widget.id),
-        child: Scaffold(
-            body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeader(),
-                Consumer<DetailRestaurantsProvider>(
-                    builder: (context, state, _) {
-                  if (state.state == ResultState.Loading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state.state == ResultState.HasData) {
-                    Future.delayed(Duration.zero, () async {
-                      setFormVisible(true);
-                    });
-                    return _buildDetailBody(state.result.restaurant);
-                  } else if (state.state == ResultState.NoData) {
-                    return Center(
-                      child: Text(state.message),
-                    );
-                  } else if (state.state == ResultState.Error) {
-                    return Center(
-                      child: Text(state.message),
-                    );
-                  } else {
-                    return const Center(child: Text(''));
-                  }
-                }),
-                if(_formVisible) _buildFormReview(),
-                if(_formVisible) Consumer<DetailRestaurantsProvider>(builder: (context, state, _){
-                  if(state.customerReview.isNotEmpty){
-                    return _buildReview(state.customerReview);
-                  }else{
-                    return const Center(child: Text('No review'),);
-                  }
-                })
-              ],
-            ),
-          ),
-        )));
-  }
-
-  Widget _buildHeader() => Stack(
-        children: [
-          Hero(
-            tag: widget.pictureId,
-            child: Image.network(ApiService().urlLargeImage + widget.pictureId),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: ChangeNotifierProvider<DetailRestaurantsProvider>(
+          create: (_) => DetailRestaurantsProvider(
+              apiService: ApiService(), id: widget.detailRestaurant.id),
+          child: Scaffold(
+              body: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.grey.withOpacity(0.5),
-                    child: IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                        )),
-                  ),
-                  const FavoriteButton()
+                  _buildHeader(),
+                  Consumer<DetailRestaurantsProvider>(
+                      builder: (context, state, _) {
+                    if (state.state == ResultState.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state.state == ResultState.hasData) {
+                      Future.delayed(Duration.zero, () async {
+                        setFormVisible(true);
+                      });
+                      return _buildDetailBody(state.result.restaurant);
+                    } else if (state.state == ResultState.noData) {
+                      return Center(
+                        child: Text(state.message),
+                      );
+                    } else if (state.state == ResultState.error) {
+                      return Center(
+                        child: Text(state.message),
+                      );
+                    } else {
+                      return const Center(child: Text(''));
+                    }
+                  }),
+                  if (_formVisible) _buildFormReview(),
+                  if (_formVisible)
+                    Consumer<DetailRestaurantsProvider>(
+                        builder: (context, state, _) {
+                      if (state.customerReview.isNotEmpty) {
+                        return _buildReview(state.customerReview);
+                      } else {
+                        return const Center(
+                          child: Text('No review'),
+                        );
+                      }
+                    })
                 ],
               ),
             ),
+          ))),
+    );
+  }
+
+  Widget _buildHeader() => Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Column(
+            children: [
+              Hero(
+                tag: widget.detailRestaurant.pictureId,
+                child: Image.network(
+                  ApiService().urlLargeImage +
+                      widget.detailRestaurant.pictureId,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(
+                height: 8.0,
+              )
+            ],
           ),
+          Positioned(
+            left: 8,
+            top: 8,
+            child: CircleAvatar(
+              backgroundColor: Colors.grey.withOpacity(0.8),
+              child: IconButton(
+                  onPressed: () {
+                    Navigation.back();
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  )),
+            ),
+          ),
+          Positioned(right: 16, bottom: -10, child: _buildFavoriteButton()),
         ],
       );
+
+  Widget _buildFavoriteButton() {
+    return Consumer<DatabaseProvider>(builder: (context, provider, _) {
+      return FutureBuilder<bool>(
+        future: provider.isFavorited(widget.detailRestaurant.id),
+        builder: (context, snapshot) {
+          var isFavorited = snapshot.data ?? false;
+          return CircleAvatar(
+            backgroundColor: Colors.white.withOpacity(0.9),
+            child: isFavorited
+                ? IconButton(
+                    onPressed: () {
+                      provider.removeBookmark(widget.detailRestaurant.id);
+                      showSnackbar('Remove from favorite');
+                    },
+                    icon: const Icon(
+                      Icons.favorite,
+                      color: Colors.red,
+                    ))
+                : IconButton(
+                    onPressed: () {
+                      provider.addFavorite(widget.detailRestaurant);
+                      showSnackbar('Added to favorite');
+                    },
+                    icon: const Icon(Icons.favorite_border, color: Colors.red)),
+          );
+        },
+      );
+    });
+  }
 
   Widget _buildDetailBody(Restaurant restaurant) {
     return Padding(
@@ -274,103 +319,104 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildFormReview() => Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Container(
-                alignment: Alignment.bottomLeft,
-                child: Text('Add review',
-                    style: Theme.of(context).textTheme.headline6)),
-            const SizedBox(
-              height: 8.0,
-            ),
-            TextFormField(
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Your name...',
-                    prefixIcon: Icon(Icons.person, color: Colors.black)),
-                controller: _nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                }),
-            const SizedBox(
-              height: 4.0,
-            ),
-            TextFormField(
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Your review...',
-                    prefixIcon: Icon(Icons.comment, color: Colors.black)),
-                controller: _reviewController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your review';
-                  }
-                  return null;
-                }),
-            const SizedBox(
-              height: 4.0,
-            ),
-            Consumer<DetailRestaurantsProvider>(builder: (context, state, _) {
-              return SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: 54,
-                child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        await state.postReview(widget.id, _nameController.text,
-                            _reviewController.text);
-                        if (state.postState == PostState.Loading) {
-                          const CircularProgressIndicator();
-                        } else if (state.postState == PostState.Error) {
-                          await showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text(state.postMessage),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text('Close'),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                  ],
-                                );
-                              });
-                        } else if (state.postState == PostState.Success) {
-                          await showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Your review added'),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text('Close'),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                  ],
-                                );
-                              });
-                        }
-                        _clearFormTextField();
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Container(
+                    alignment: Alignment.bottomLeft,
+                    child: Text('Add review',
+                        style: Theme.of(context).textTheme.headline6)),
+                const SizedBox(
+                  height: 8.0,
+                ),
+                TextFormField(
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Your name...',
+                        prefixIcon: Icon(Icons.person, color: Colors.black)),
+                    controller: _nameController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
                       }
-                    },
-                    child: const Text('Add review')),
-              );
-            }),
-          ],
-        )),
-  );
+                      return null;
+                    }),
+                const SizedBox(
+                  height: 4.0,
+                ),
+                TextFormField(
+                    keyboardType: TextInputType.multiline,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Your review...',
+                        prefixIcon: Icon(Icons.comment, color: Colors.black)),
+                    controller: _reviewController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your review';
+                      }
+                      return null;
+                    }),
+                const SizedBox(
+                  height: 4.0,
+                ),
+                Consumer<DetailRestaurantsProvider>(
+                    builder: (context, state, _) {
+                  return SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    height: 54,
+                    child: ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            await state.postReview(widget.detailRestaurant.id,
+                                _nameController.text, _reviewController.text);
+                            if (state.postState == PostState.loading) {
+                              const CircularProgressIndicator();
+                            } else if (state.postState == PostState.error) {
+                              await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text(state.postMessage),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Close'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            } else if (state.postState == PostState.success) {
+                              await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text('Your review added'),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Close'),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            }
+                            _clearFormTextField();
+                          }
+                        },
+                        child: const Text('Add review')),
+                  );
+                }),
+              ],
+            )),
+      );
 
   Widget _buildReview(List<CustomerReview> customerReview) {
     return Padding(
@@ -404,13 +450,14 @@ class _DetailPageState extends State<DetailPage> {
           height: 8.0,
         ),
         Container(
-            decoration: BoxDecoration(
-                border: Border.all(color: Colors.black26, width: 1),
-                borderRadius: BorderRadius.circular(8.0)),
-            child: ListTile(
-              title: Text(review.name),
-              subtitle: Text(review.review + '\n' + review.date),
-            )),
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.black26, width: 1),
+              borderRadius: BorderRadius.circular(8.0)),
+          child: ListTile(
+            title: Text(review.name),
+            subtitle: Text(review.review + '\n' + review.date),
+          ),
+        ),
       ],
     ));
   }
@@ -419,29 +466,8 @@ class _DetailPageState extends State<DetailPage> {
     _nameController.clear();
     _reviewController.clear();
   }
-}
 
-class FavoriteButton extends StatefulWidget {
-  const FavoriteButton({Key? key}) : super(key: key);
-
-  @override
-  State<StatefulWidget> createState() => _FavoriteButtonState();
-}
-
-class _FavoriteButtonState extends State<FavoriteButton> {
-  bool isFavorite = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-        onPressed: () {
-          setState(() {
-            isFavorite = !isFavorite;
-          });
-        },
-        icon: Icon(
-          isFavorite ? Icons.favorite : Icons.favorite_border,
-          color: Colors.red,
-        ));
+  void showSnackbar(String word) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(word)));
   }
 }

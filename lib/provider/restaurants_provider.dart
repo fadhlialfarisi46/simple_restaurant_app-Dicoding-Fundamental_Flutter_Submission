@@ -6,10 +6,10 @@ import 'package:simple_restaurant_app/extension/state_management.dart';
 
 import '../data/response/restaurant_result.dart';
 
-class RestaurantsProvider extends ChangeNotifier{
+class RestaurantsProvider extends ChangeNotifier {
   final ApiService apiService;
 
-  RestaurantsProvider({required this.apiService}){
+  RestaurantsProvider({required this.apiService}) {
     _fetchAllRestaurant();
   }
 
@@ -23,28 +23,28 @@ class RestaurantsProvider extends ChangeNotifier{
   String get message => _message;
 
   Future<dynamic> _fetchAllRestaurant() async {
-    try{
-      _state = ResultState.Loading;
+    try {
+      _state = ResultState.loading;
       notifyListeners();
       final restaurant = await apiService.listRestaurants();
-      if(restaurant.restaurants.isEmpty){
-        _state = ResultState.NoData;
+      if (restaurant.restaurants.isEmpty) {
+        _state = ResultState.noData;
         notifyListeners();
         return _message = 'Empty Data';
-      }else{
-        _state = ResultState.HasData;
+      } else {
+        _state = ResultState.hasData;
         notifyListeners();
         return _restaurantResult = restaurant;
       }
-    }on SocketException{
-      _state = ResultState.Error;
+    } on SocketException {
+      _state = ResultState.error;
       notifyListeners();
-      return _message = 'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
-    }catch (e) {
-      _state = ResultState.Error;
+      return _message =
+          'No internet connection. Make sure your Wi-Fi or mobile data is turned on, then try again.';
+    } catch (e) {
+      _state = ResultState.error;
       notifyListeners();
       return _message = 'Error --> $e';
     }
   }
 }
-

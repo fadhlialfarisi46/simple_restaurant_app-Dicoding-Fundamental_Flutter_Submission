@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:simple_restaurant_app/common/navigation_route.dart';
 import 'package:simple_restaurant_app/data/model/restaurant.dart';
 
 import '../data/api/api_service.dart';
-import '../data/model/detail_page_arguments.dart';
 import '../ui/detail_page.dart';
 
 class ItemRestaurants extends StatelessWidget {
@@ -14,31 +14,32 @@ class ItemRestaurants extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, DetailPage.routeName,
-            arguments: DetailPageArguments(
-                restaurant.id, restaurant.pictureId));
+        Navigation.intentWithData(DetailPage.routeName, restaurant);
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: SizedBox(
           height: 100,
           child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
+            child: IntrinsicHeight(
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                       flex: 1,
-                      child: Hero(
-                          tag: restaurant.pictureId,
-                          child: Image.network(
-                            ApiService().urlSmallImage + restaurant.pictureId,
-                            fit: BoxFit.cover,
-                          ))),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Hero(
+                            tag: restaurant.pictureId,
+                            child: Image.network(
+                              ApiService().urlSmallImage + restaurant.pictureId,
+                              fit: BoxFit.fill,
+                            )),
+                      )),
                   Expanded(
                     flex: 2,
                     child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        padding: const EdgeInsets.all(8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
